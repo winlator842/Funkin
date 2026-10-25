@@ -1,0 +1,68 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Setup Haxe
+      uses: krdlab/setup-haxe@v1
+      with:
+        haxe-version: 4.2.4
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        cmdline-tools-version: 9.0
+
+    - name: Install dependencies
+      run: |
+        haxelib setup ~/haxelib
+        haxelib install lime 7.0.0
+        haxelib install openfl 8.9.7
+        haxelib install flixel 6.2.0
+        haxelib install flixel-ui 2.2.0
+        haxelib install flixel-tools 1.4.1
+        haxelib install flixel-addons 2.10.0
+        haxelib set lime 7.0.0
+        haxelib set openfl 8.9.7
+
+    - name: Accept Android licenses
+      run: |
+        yes | sdkmanager --licenses || true
+
+    - name: Install Android components
+      run: |
+        sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
+
+    - name: Export Android SDK paths
+      run: |
+        echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "JAVA_HOME=$JAVA_HOME_11_X64" >> $GITHUB_ENV
+
+    - name: Build APK
+      run: |
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
+        haxelib run lime build android -release
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: Funkin-Android-APK
+        path: export/release/bin/
