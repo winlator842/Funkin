@@ -10,8 +10,11 @@ jobs:
     runs-on: ubuntu-22.04
     
     steps:
-    - name: Checkout
+    - name: Checkout FNF
       uses: actions/checkout@v3
+      with:
+        repository: FunkinCrew/funkin
+        ref: main
 
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
@@ -55,9 +58,6 @@ jobs:
 
     - name: Build APK
       run: |
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        export JAVA_HOME=$JAVA_HOME_11_X64
-        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
         haxelib run lime build android -release
 
     - name: Upload APK
