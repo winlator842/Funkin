@@ -13,10 +13,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Fix source encoding
+    - name: Sanitize non-ASCII from all source files
       run: |
-        # Find and replace non-ASCII characters in source files
-        find . -name "*.hx" -type f -exec sed -i "s/[^\x00-\x7F]/_/g" {} \;
+        find . -type f $ -name "*.hx" -o -name "*.hxml" $ -exec sh -c '
+          for f in "$@"; do
+            LC_ALL=C sed -i "s/[^[:print:]\t]//g" "$f"
+          done
+        ' _ {} +
 
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
