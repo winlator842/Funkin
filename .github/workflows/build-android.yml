@@ -15,9 +15,15 @@ jobs:
 
     - name: Sanitize non-ASCII from source files
       run: |
-        find . -type f $ -name "*.hx" -o -name "*.hxml" $ | while read -r file; do
-          LC_ALL=C sed -i 's/[^[:print:]]//g' "$file"
-        done
+        find . -name "*.hx" -type f > /tmp/hx_files.txt
+        while IFS= read -r file; do
+          python3 -c "
+with open('$file', 'rb') as f:
+    data = f.read()
+with open('$file', 'wb') as f:
+    f.write(bytes([b if b < 128 else 63 for b in data]))
+"
+        done < /tmp/hx_files.txt
 
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
