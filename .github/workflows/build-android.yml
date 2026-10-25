@@ -13,6 +13,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Fix source encoding
+      run: |
+        # Find and replace non-ASCII characters in source files
+        find . -name "*.hx" -type f -exec sed -i "s/[^\x00-\x7F]/_/g" {} \;
+
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
       with:
@@ -53,31 +58,7 @@ jobs:
         echo "JAVA_HOME=$JAVA_HOME_11_X64" >> $GITHUB_ENV
         echo "PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_ENV
 
-    - name: First pass - generate Project.hx and fix it
-      run: |
-        haxelib run lime build android -release || true
-
-    - name: Fix Project.hx encoding
-      run: |
-        python3 << 'EOF'
-        import os
-        import glob
-        project_files = glob.glob('/tmp/temp*/Project.hx') + glob.glob('/tmp/*/Project.hx')
-        for fpath in project_files:
-            if os.path.exists(fpath):
-                with open(fpath, 'rb') as f:
-                    data = f.read()
-                fixed = bytes([b if b < 128 else ord('?') for b in data])
-                with open(fpath, 'wb') as f:
-                    f.write(fixed)
-                print(f"Fixed: {fpath}")
-        EOF
-
-    - name: Make Project.hx read-only to prevent lime from regenerating
-      run: |
-        find /tmp -name "Project.hx" -type f -exec chmod 444 {} \; 2>/dev/null || true
-
-    - name: Build APK (final)
+    - name: Build APK
       run: |
         haxelib run lime build android -release
 
