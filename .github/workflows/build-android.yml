@@ -13,13 +13,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Sanitize non-ASCII from all source files
+    - name: Sanitize non-ASCII from source files
       run: |
-        find . -type f $ -name "*.hx" -o -name "*.hxml" $ -exec sh -c '
-          for f in "$@"; do
-            LC_ALL=C sed -i "s/[^[:print:]\t]//g" "$f"
-          done
-        ' _ {} +
+        find . -type f $ -name "*.hx" -o -name "*.hxml" $ | while read -r file; do
+          LC_ALL=C sed -i 's/[^[:print:]]//g' "$file"
+        done
 
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
