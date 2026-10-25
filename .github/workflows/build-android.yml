@@ -53,25 +53,29 @@ jobs:
         echo "JAVA_HOME=$JAVA_HOME_11_X64" >> $GITHUB_ENV
         echo "PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_ENV
 
-    - name: Fix encoding in Project.hx
+    - name: First generate to trigger Project.hx creation
       run: |
-        mkdir -p /tmp/temp
-        touch /tmp/temp/Project.hx
-        sed -i 's/[^\x00-\x7F]/?/g' /tmp/temp/Project.hx 2>/dev/null || true
+        haxelib run lime build android -release || true
 
-    - name: Generate Project.hx
+    - name: Fix Project.hx encoding
       run: |
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        export JAVA_HOME=$JAVA_HOME_11_X64
-        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
-        haxelib run lime build android -release
-        sed -i 's/[^\x00-\x7F]/?/g' /tmp/temp/Project.hx || true
+        python3 << 'EOF'
+        import os
+        import glob
+        project_files = glob.glob('/tmp/temp*/Project.hx') + glob.glob('/tmp/*/Project.hx')
+        for fpath in project_files:
+            if os.path.exists(fpath):
+                with open(fpath, 'rb') as f:
+                    data = f.read()
+                # Replace any byte > 127 with '?'
+                fixed = bytes([b if b < 128 else ord('?') for b in data])
+                with open(fpath, 'wb') as f:
+                    f.write(fixed)
+                print(f"Fixed: {fpath}")
+        EOF
 
     - name: Build APK
       run: |
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        export JAVA_HOME=$JAVA_HOME_11_X64
-        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
         haxelib run lime build android -release
 
     - name: Upload APK
