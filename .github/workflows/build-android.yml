@@ -30,7 +30,8 @@ jobs:
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
         unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
         mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-        yes | sdkmanager --licenses > /dev/null 2>&1
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+        yes | sdkmanager --licenses > /dev/null
         sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3"
 
     - name: Install dependencies
