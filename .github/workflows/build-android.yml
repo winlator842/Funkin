@@ -10,11 +10,8 @@ jobs:
     runs-on: ubuntu-22.04
     
     steps:
-    - name: Checkout FNF
+    - name: Checkout
       uses: actions/checkout@v3
-      with:
-        repository: FunkinCrew/funkin
-        ref: main
 
     - name: Setup Haxe
       uses: krdlab/setup-haxe@v1
@@ -56,8 +53,25 @@ jobs:
         echo "JAVA_HOME=$JAVA_HOME_11_X64" >> $GITHUB_ENV
         echo "PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3" >> $GITHUB_ENV
 
+    - name: Fix encoding in Project.hx
+      run: |
+        mkdir -p /tmp/temp
+        touch /tmp/temp/Project.hx
+        sed -i 's/[^\x00-\x7F]/?/g' /tmp/temp/Project.hx 2>/dev/null || true
+
+    - name: Generate Project.hx
+      run: |
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
+        haxelib run lime build android -release
+        sed -i 's/[^\x00-\x7F]/?/g' /tmp/temp/Project.hx || true
+
     - name: Build APK
       run: |
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        export JAVA_HOME=$JAVA_HOME_11_X64
+        export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/30.0.3
         haxelib run lime build android -release
 
     - name: Upload APK
